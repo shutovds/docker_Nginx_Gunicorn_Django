@@ -1,0 +1,51 @@
+version: '3.7'
+
+services:
+  web:
+    build: ./app
+    # command: python /usr/src/app/mysite/manage.py runserver 0.0.0.0:8000
+    command: gunicorn mysite.wsgi -b :8000 --chdir /usr/src/app/mysite/
+    volumes:
+      - ./app/:/usr/src/app/
+      - static:/usr/src/app/mysite/static
+      - static_files:/usr/src/app/mysite/static_files
+      - media:/usr/src/app/mysite/media
+    expose:
+      - 8000 
+    #ports:
+    #  - 8000:8000
+    environment:
+      SECRET_KEY: )m%eg-s85n4u9lb+rv21n%e=0mfzjmmb4p04cxz2xp=vdfz)xr
+      DEBUG:
+      DB_HOST: db
+      DB_PORT: 5432
+    env_file:
+      - postgres-variables.env
+    depends_on:
+      - db
+      
+  db:
+    image: postgres
+    container_name: postgres_for_nginx
+    restart: always
+    env_file:
+      - postgres-variables.env 
+    volumes:
+      - ./postgre_datadir:/var/lib/postgresql/data
+    
+  nginx:
+    build: ./nginx  
+    ports:
+      - 1337:80
+    volumes:
+      - static:/usr/src/app/mysite/static
+      - static_files:/usr/src/app/mysite/static_files
+      - media:/usr/src/app/mysite/media  
+    depends_on:
+      - web
+      
+volumes:
+  postgre_datadir:
+  static:
+  static_files:
+  media:
